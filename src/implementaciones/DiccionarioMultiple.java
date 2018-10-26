@@ -1,113 +1,190 @@
 package implementaciones;
 
 import apis.ABBTDA;
+import apis.ConjuntoTDA;
+import apis.ColaTDA;
 import apis.DiccionarioMultipleTDA;
 
 public class DiccionarioMultiple implements DiccionarioMultipleTDA {
 
-	class Elemento{
+	class NodoClave{ 
 		int clave;
-		int[] valores;
-		int cantValores;
+		ConjuntoLD valores;
+		NodoClave sigClave; 
 	}
 	
-	Elemento[] elementos;
-	int cantClaves;
+	NodoClave origen;
 	
 	@Override
-	public void InicializarDiccionario() {
-		elementos = new Elemento[100];
-		cantClaves = 0;
+	public void InicializarDiccionario(){
+		origen = null;
 	}
 
+
 	@Override
-	public void Agregar(int clave, int valor) {
-		int posC = Clave2Indice(clave);
-		if (posC == -1) {
-			posC = cantClaves;
-			elementos[posC] = new Elemento();
-			elementos[posC].clave = clave;
-			elementos[posC].cantValores = 0;
-			elementos[posC].valores = new int[100];
-			cantClaves++;
+	public void Agregar(int clave, int valor){ 
+		NodoClave nc = Clave2NodoClave(clave); 
+		if (nc == null) {
+			nc = new NodoClave(); 
+			nc.valores = new ConjuntoLD();
+			nc.clave = clave;
+			nc.sigClave = origen; 
+			origen = nc;
 		}
 		
-		Elemento e = elementos[posC];
-		int posV = Valor2Indice(e, valor);
-		if (posV == -1) {
-			e.valores[e.cantValores] = valor;
-			e.cantValores++;
-		}
+		if (!nc.valores.Pertenece(valor))
+			nc.valores.Agregar(valor);
 	}
 
-	private int Valor2Indice(Elemento e, int valor) {
-		int i = e.cantValores-1;
-		while (i>=0 && e.valores[i] != valor) {
-			i--;
+	private NodoClave Clave2NodoClave (int clave) {
+		NodoClave aux = origen;
+		while (aux != null && aux.clave != clave) {
+			aux = aux.sigClave;
 		}
-		return i;
+		return aux;
 	}
-
-	private int Clave2Indice(int clave) {
-		int i = cantClaves-1;
-		while(i>=0 && elementos[i].clave != clave) {
-			i--;
-		}
-		return i;
-	}
-
-	@Override
-	public void Eliminar(int clave) {
-		int pos = Clave2Indice(clave);
-		if (pos != -1) {
-			elementos[pos] = elementos[cantClaves-1];
-			cantClaves--;
-		}
-	}
-
-	@Override
-	public void EliminarValor(int clave, int valor) {
-		int posC = Clave2Indice(clave);
-		if (posC != -1) {
-			Elemento e = elementos[posC];
-			int posV = Valor2Indice(e, valor);
-			if (posV != -1) {
-				e.valores[posV] = e.valores[e.cantValores-1];
-				e.cantValores--;
-				if (e.cantValores == 0) {
-					Eliminar(clave);
+	
+	public void EliminarValor (int clave, int valor) {
+		
+		if (origen != null) {
+			if (origen.clave == clave) {
+				EliminarValorEnNodo(origen, valor);
+				
+				if (origen.valores.ConjuntoVacio()) {
+					origen = origen.sigClave;
+				}
+			}else {
+				NodoClave aux = origen;
+				while (aux.sigClave != null && aux.sigClave.clave != clave) {
+					aux = aux.sigClave;
+				}
+				if (aux.sigClave != null) {
+					EliminarValorEnNodo (aux.sigClave, valor);
+					if (aux.sigClave.valores.ConjuntoVacio()) {
+						aux.sigClave = aux.sigClave.sigClave;
+					}
 				}
 			}
 		}
 	}
 
-	@Override
-	public ABBTDA Recuperar(int clave) {
-
-		ABBTDA arbol = new ABB();
-		arbol.InicializarArbol();
-
-		int pos = Clave2Indice(clave);
-		if (pos != -1) {
-			Elemento e = elementos[pos];
-			for (int i = 0; i<e.cantValores; i++) {
-				arbol.AgregarElem(e.valores[i]);
+	private void EliminarValorEnNodo (NodoClave nodo, int valor) {
+		if (!nodo.valores.ConjuntoVacio()) {
+			if (nodo.valores.Pertenece(valor))
+				nodo.valores.Sacar(valor);
+		}
+	}
+	
+	public void Eliminar (int clave) {
+		if (origen != null) {
+			if (origen.clave == clave) {
+				origen = origen.sigClave;
+			}else {
+				NodoClave aux = origen;
+				while (aux.sigClave != null && aux.sigClave.clave != clave) {
+					aux = aux.sigClave;
+				}
+				if (aux.sigClave != null) {
+					aux.sigClave = aux.sigClave.sigClave;
+				}
 			}
 		}
-
-		return arbol;
 	}
+	
+	public void Recuperar(int clave, int parametro){ 
+		ColaTDA cola = new ColaLD();
+		cola.InicializarCola();
 
-	@Override
-	public ABBTDA Claves() {
+		int aux = 0;
 		
-		ABBTDA arbol = new ABB();
-		arbol.InicializarArbol();
-		for (int i = 0; i<cantClaves; i++) {
-			arbol.AgregarElem(elementos[i].clave);
+		NodoClave n = Clave2NodoClave(clave);
+		
+		ConjuntoTDA copia = new ConjuntoLD();
+		copia.InicializarConjunto();
+		
+		ABBTDA c = new ABB();
+		c.InicializarArbol();
+		
+		if(n != null)
+			CopiarConjunto(n.valores, copia);
+		
+		while (!copia.ConjuntoVacio()) {
+			aux = copia.Elegir();
+			copia.Sacar(aux);
+			c.AgregarElem(aux);
+		}
+		if (parametro == 1) {
+			EnOrdenAscendente(c, cola);
+			 
+		}else if (parametro == 2) {
+			EnOrdenDescendente(c, cola);
 		}
 		
-		return arbol;
+		while (!cola.ColaVacia()) {
+			System.out.println(cola.Primero());
+			cola.Desacolar();
+		}
+	}
+	
+	private void EnOrdenDescendente(ABBTDA arbol, ColaTDA cola) {
+		if (!arbol.ArbolVacio()){
+			EnOrdenDescendente(arbol.HijoDer(), cola); 
+			cola.Acolar(arbol.Raiz());
+			EnOrdenDescendente(arbol.HijoIzq(), cola);
+		}
+	}
+	
+	private void EnOrdenAscendente(ABBTDA arbol, ColaTDA cola) {
+		if (!arbol.ArbolVacio()){
+			EnOrdenAscendente(arbol.HijoIzq(), cola); 
+			cola.Acolar(arbol.Raiz());
+			EnOrdenAscendente(arbol.HijoDer(), cola);
+		}
+	}
+	
+	private void CopiarConjunto(ConjuntoLD original, ConjuntoTDA copia) {
+		ColaLD aux = new ColaLD();
+		aux.InicializarCola();
+		int extra;
+		
+		while (!original.ConjuntoVacio()) {
+			extra = original.Elegir();
+			aux.Acolar(extra);
+			original.Sacar(extra);
+		}
+		
+		while (!aux.ColaVacia()) {
+			extra = aux.Primero();
+			aux.Desacolar();
+			original.Agregar(extra);
+			copia.Agregar(extra);
+		}
+	}
+
+	public void Claves (int parametro) {
+		ColaTDA cola = new ColaLD();
+		cola.InicializarCola();
+		
+		ABBTDA c = new ABB();
+		c.InicializarArbol();
+		
+		NodoClave aux = origen; 
+		while (aux != null){
+			c.AgregarElem(aux.clave);
+			aux = aux.sigClave; 
+		}
+		
+		if (parametro == 1) {
+			EnOrdenAscendente(c, cola);
+			 
+		}else if (parametro == 2) {
+			EnOrdenDescendente(c, cola);
+		}
+		
+		while (!cola.ColaVacia()) {
+			System.out.println(cola.Primero());
+			cola.Desacolar();
+		}
 	}
 
 }

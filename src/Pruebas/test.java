@@ -1,8 +1,6 @@
 package Pruebas;
 
 import implementaciones.DiccionarioMultiple;
-import implementaciones.ABB;
-import Metodos.metodos;
 
 
 public class test {
@@ -17,24 +15,13 @@ public class test {
 		DM.Agregar(7, 1);
 		DM.Agregar(7, 5);
 		DM.Agregar(7, 0);
-
-		ABB a = new ABB();
-		a.InicializarArbol();
 		
+	
+		System.out.println("Muestro los valores de la clave 7\n");
+		DM.Recuperar(7, 2);
+		System.out.println("\nMuestro todas las claves\n");
+		DM.Claves(2);
 		
-		//Muestro las claves en orden
-		a = (ABB)DM.Claves();
-		System.out.println("Claves en Orden Ascendente");
-		metodos.MostrarArbol(a, 1); // Muestro en orden ascendente
-		System.out.println("\nClaves en Orden Descendente");
-		metodos.MostrarArbol(a, 2); // Muestro en orden desendente
-		
-		//Muestro los valores de las claves en orden
-		a = (ABB)DM.Recuperar(7);
-		System.out.println("\nValores de clave en Orden Ascendente");
-		metodos.MostrarArbol(a, 1); // Muestro en orden ascendente
-		System.out.println("\nValores de clave en Orden Descendente");
-		metodos.MostrarArbol(a, 2); // Muestro en orden desendente
 	}
 
 }

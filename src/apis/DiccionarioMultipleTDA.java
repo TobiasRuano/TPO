@@ -8,7 +8,7 @@ public interface DiccionarioMultipleTDA { void InicializarDiccionario();
 	
 	void EliminarValor(int clave, int valor);
 	
-	ABBTDA Recuperar(int clave);
+	void Recuperar(int clave, int parametro);
 	
-	ABBTDA Claves(); 
+	void Claves(int parametro); 
 }
